@@ -1,0 +1,15 @@
+{
+  "type": "forge:add_spawns",
+  "biomes": [
+    "minecraft:snowy_plains",
+    "minecraft:ice_spikes",
+    "minecraft:snowy_slopes",
+    "minecraft:frozen_peaks"
+  ],
+  "spawners": {
+    "type": "holynight:holy_knight",
+    "weight": 1,
+    "minCount": 1,
+    "maxCount": 1
+  }
+}
