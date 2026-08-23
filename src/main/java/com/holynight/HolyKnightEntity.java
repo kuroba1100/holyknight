@@ -7,8 +7,6 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -18,15 +16,17 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
+
+import io.redspace.ironsspellbooks.api.magic.MagicData;
+import io.redspace.ironsspellbooks.api.registry.SpellRegistry;
+import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
+import io.redspace.ironsspellbooks.api.spells.CastSource;
 
 public class HolyKnightEntity extends Monster implements GeoEntity {
 
@@ -42,16 +42,22 @@ public class HolyKnightEntity extends Monster implements GeoEntity {
     private int smiteCooldown = 0;
     private int castingTicks = 0;
     private boolean isCastingHeal = false;
-    private int healUsesLeft = 3;
     private int lungeTicksLeft = 0;
+    private int lastCombatTick = -200;
 
-    private static final int HEAL_CAST_TIME = 200;
-    private static final int HEAL_COOLDOWN = 1800;
+    private int healCastTime = 0;
+
+    private static final int HEAL_COOLDOWN = 6000; // 5 minutes
+    private static final int SMITE_COOLDOWN = 400; // 20 seconds
+    private static final double SMITE_RANGE = 3.0;
+    private static final float SMITE_CHANCE = 0.0143F; // per tick, about 25% over one second
+    private static final int SMITE_LEVEL = 1;
+    private static final int HEAL_LEVEL = 1;
+    private static final int COUNTER_CHANCE = 30; // percent
 
     public HolyKnightEntity(EntityType<? extends Monster> type, Level level) {
         super(type, level);
         this.xpReward = 50;
-        this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_SWORD));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -62,12 +68,11 @@ public class HolyKnightEntity extends Monster implements GeoEntity {
                 .add(Attributes.ARMOR, 12.0)
                 .add(Attributes.ARMOR_TOUGHNESS, 6.0)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.6)
-                .add(Attributes.FOLLOW_RANGE, 32.0);
+                .add(Attributes.FOLLOW_RANGE, 64.0);
     }
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2, false));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -83,33 +88,41 @@ public class HolyKnightEntity extends Monster implements GeoEntity {
 
         this.bossEvent.setProgress(this.getHealth() / this.getMaxHealth());
 
+        if (this.tickCount % 20 == 0) {
+            for (ServerPlayer player : this.level().getServer().getPlayerList().getPlayers()) {
+                double dist = this.distanceTo(player);
+                if (dist < 64.0) {
+                    this.bossEvent.addPlayer(player);
+                } else {
+                    this.bossEvent.removePlayer(player);
+                }
+            }
+        }
+
         if (healCooldown > 0) healCooldown--;
         if (smiteCooldown > 0) smiteCooldown--;
 
         if (isCastingHeal) {
             castingTicks++;
-            if (castingTicks >= HEAL_CAST_TIME) {
-                this.setHealth(this.getMaxHealth());
-                this.level().broadcastEntityEvent(this, (byte) 35);
-                this.playSound(SoundEvents.BEACON_ACTIVATE, 1.5F, 1.2F);
+            if (castingTicks >= healCastTime) {
+                castSpell(SpellRegistry.GREATER_HEAL_SPELL.get(), HEAL_LEVEL);
                 isCastingHeal = false;
                 castingTicks = 0;
                 healCooldown = HEAL_COOLDOWN;
-                healUsesLeft--;
             }
-        } else if (healUsesLeft > 0 && healCooldown <= 0 && this.getHealth() < this.getMaxHealth() * 0.5) {
+        } else if (healCooldown <= 0 && this.getHealth() < this.getMaxHealth() * 0.5) {
             float hpRatio = this.getHealth() / this.getMaxHealth();
-            float castChance = 1.0F - (hpRatio / 0.5F);
-            castChance = castChance * castChance;
-            if (hpRatio <= 0.1F) castChance = 0.9F + this.getRandom().nextFloat() * 0.1F;
-            if (this.getRandom().nextFloat() < castChance * 0.05F) {
+            float castChance = 0.5F + 0.5F * (1.0F - hpRatio / 0.5F);
+            if (this.getRandom().nextFloat() < castChance * 0.02F) {
                 isCastingHeal = true;
                 castingTicks = 0;
+                healCastTime = SpellRegistry.GREATER_HEAL_SPELL.get().getEffectiveCastTime(HEAL_LEVEL, this);
                 this.playSound(SoundEvents.BEACON_POWER_SELECT, 1.0F, 0.8F);
             }
         }
 
-        if (this.getTarget() == null && this.getHealth() < this.getMaxHealth()) {
+        boolean inCombat = this.getTarget() != null || (this.tickCount - lastCombatTick) < 200;
+        if (!inCombat && this.getHealth() < this.getMaxHealth()) {
             this.heal(1.0F);
         }
 
@@ -127,12 +140,15 @@ public class HolyKnightEntity extends Monster implements GeoEntity {
         }
 
         LivingEntity target = this.getTarget();
-        if (target != null && !isCastingHeal && smiteCooldown <= 0 && this.distanceTo(target) < 8.0) {
-            target.hurt(this.damageSources().magic(), 14.0F);
-            target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 1));
-            this.playSound(SoundEvents.LIGHTNING_BOLT_IMPACT, 1.0F, 1.5F);
-            smiteCooldown = 80;
+        if (target != null && !isCastingHeal && smiteCooldown <= 0 && this.distanceTo(target) < SMITE_RANGE
+                && this.getRandom().nextFloat() < SMITE_CHANCE) {
+            castSpell(SpellRegistry.DIVINE_SMITE_SPELL.get(), SMITE_LEVEL);
+            smiteCooldown = SMITE_COOLDOWN;
         }
+    }
+
+    private void castSpell(AbstractSpell spell, int spellLevel) {
+        spell.onCast(this.level(), spellLevel, this, CastSource.MOB, MagicData.getPlayerMagicData(this));
     }
 
     public void onPlayerCastSpellNearby(Player caster) {
@@ -190,39 +206,50 @@ public class HolyKnightEntity extends Monster implements GeoEntity {
     }
 
     @Override
-    public void customServerAiStep() {
-        super.customServerAiStep();
-        this.bossEvent.setVisible(this.isAlive());
-        for (ServerPlayer player : this.level().getServer().getPlayerList().getPlayers()) {
-            if (this.distanceTo(player) < 64.0) {
-                this.bossEvent.addPlayer(player);
-            } else {
-                this.bossEvent.removePlayer(player);
-            }
+    public boolean hurt(DamageSource source, float amount) {
+        lastCombatTick = this.tickCount;
+        boolean hurt = super.hurt(source, amount);
+        if (hurt && !this.level().isClientSide() && !isCastingHeal
+                && source.getEntity() instanceof LivingEntity attacker
+                && this.getRandom().nextInt(100) < COUNTER_CHANCE) {
+            this.doHurtTarget(attacker);
         }
+        return hurt;
     }
 
-    // Sounds
+    @Override
+    public void die(DamageSource source) {
+        super.die(source);
+        this.bossEvent.removeAllPlayers();
+        this.bossEvent.setVisible(false);
+    }
+
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return SoundEvents.VINDICATOR_AMBIENT;
+        return null;
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        return SoundEvents.VINDICATOR_HURT;
+        return null;
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return SoundEvents.VINDICATOR_DEATH;
+        return null;
     }
 
     @Override
     public boolean canChangeDimensions() {
         return false;
     }
+
+    @Override
+    public boolean removeWhenFarAway(double distanceSquared) {
+        return false;
+    }
+
 
     public boolean isCastingHeal() {
         return isCastingHeal;

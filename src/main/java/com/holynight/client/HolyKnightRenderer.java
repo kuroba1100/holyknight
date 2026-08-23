@@ -11,6 +11,5 @@ public class HolyKnightRenderer extends GeoEntityRenderer<HolyKnightEntity> {
         this.shadowRadius = 1.0F;
         this.scaleWidth = 2.0F;
         this.scaleHeight = 2.0F;
-        addRenderLayer(new HolyKnightItemLayer(this));
     }
 }

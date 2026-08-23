@@ -8,7 +8,7 @@
   ],
   "spawners": {
     "type": "holynight:holy_knight",
-    "weight": 1,
+    "weight": 3,
     "minCount": 1,
     "maxCount": 1
   }

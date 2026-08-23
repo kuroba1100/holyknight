@@ -113,6 +113,11 @@
 					]
 				},
 				{
+					"name": "right_hand",
+					"parent": "right_arm",
+					"pivot": [-6, 12, 0]
+				},
+				{
 					"name": "torso_lower",
 					"parent": "torso",
 					"pivot": [0, 0, 0],
