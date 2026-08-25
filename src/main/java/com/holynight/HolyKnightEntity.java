@@ -88,17 +88,6 @@ public class HolyKnightEntity extends Monster implements GeoEntity {
 
         this.bossEvent.setProgress(this.getHealth() / this.getMaxHealth());
 
-        if (this.tickCount % 20 == 0) {
-            for (ServerPlayer player : this.level().getServer().getPlayerList().getPlayers()) {
-                double dist = this.distanceTo(player);
-                if (dist < 64.0) {
-                    this.bossEvent.addPlayer(player);
-                } else {
-                    this.bossEvent.removePlayer(player);
-                }
-            }
-        }
-
         if (healCooldown > 0) healCooldown--;
         if (smiteCooldown > 0) smiteCooldown--;
 
@@ -222,6 +211,24 @@ public class HolyKnightEntity extends Monster implements GeoEntity {
         super.die(source);
         this.bossEvent.removeAllPlayers();
         this.bossEvent.setVisible(false);
+    }
+
+    @Override
+    public void startSeenByPlayer(ServerPlayer player) {
+        super.startSeenByPlayer(player);
+        this.bossEvent.addPlayer(player);
+    }
+
+    @Override
+    public void stopSeenByPlayer(ServerPlayer player) {
+        super.stopSeenByPlayer(player);
+        this.bossEvent.removePlayer(player);
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        this.bossEvent.removeAllPlayers();
+        super.remove(reason);
     }
 
 
