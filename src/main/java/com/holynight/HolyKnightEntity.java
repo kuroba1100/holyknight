@@ -6,7 +6,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.BossEvent;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -196,6 +198,11 @@ public class HolyKnightEntity extends Monster implements GeoEntity {
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
+        // 落下・酸欠は無効。戦闘扱いにもしないので非戦闘時の回復が止まらない
+        if (source.is(DamageTypeTags.IS_FALL) || source.is(DamageTypes.DROWN)) {
+            return false;
+        }
+
         lastCombatTick = this.tickCount;
         boolean hurt = super.hurt(source, amount);
         if (hurt && !this.level().isClientSide() && !isCastingHeal
