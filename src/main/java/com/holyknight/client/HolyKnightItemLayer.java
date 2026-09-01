@@ -1,6 +1,6 @@
-package com.holynight.client;
+package com.holyknight.client;
 
-import com.holynight.HolyKnightEntity;
+import com.holyknight.HolyKnightEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;

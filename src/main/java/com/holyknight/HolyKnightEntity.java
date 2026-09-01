@@ -1,4 +1,4 @@
-package com.holynight;
+package com.holyknight;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerBossEvent;
@@ -35,7 +35,7 @@ public class HolyKnightEntity extends Monster implements GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     private final ServerBossEvent bossEvent = new ServerBossEvent(
-            Component.translatable("entity.holynight.holy_knight"),
+            Component.translatable("entity.holyknight.holy_knight"),
             BossEvent.BossBarColor.YELLOW,
             BossEvent.BossBarOverlay.PROGRESS
     );

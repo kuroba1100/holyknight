@@ -1,4 +1,4 @@
-package com.holynight;
+package com.holyknight;
 
 import io.redspace.ironsspellbooks.api.events.SpellOnCastEvent;
 import net.minecraft.world.damagesource.DamageSource;
@@ -11,7 +11,7 @@ import net.minecraftforge.fml.common.Mod;
 
 import java.util.List;
 
-@Mod.EventBusSubscriber(modid = HolyNight.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@Mod.EventBusSubscriber(modid = HolyKnight.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class SpellCastHandler {
 
     private static final double DETECTION_RANGE = 32.0;

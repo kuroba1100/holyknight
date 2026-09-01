@@ -1,4 +1,4 @@
-package com.holynight;
+package com.holyknight;
 
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -10,10 +10,10 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
-@Mod(HolyNight.MODID)
-public class HolyNight {
+@Mod(HolyKnight.MODID)
+public class HolyKnight {
 
-    public static final String MODID = "holynight";
+    public static final String MODID = "holyknight";
 
     public static final DeferredRegister<EntityType<?>> ENTITIES =
             DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, MODID);
@@ -25,7 +25,7 @@ public class HolyNight {
                             .clientTrackingRange(10)
                             .build("holy_knight"));
 
-    public HolyNight() {
+    public HolyKnight() {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         ENTITIES.register(modBus);
         modBus.addListener(this::onAttributeCreation);

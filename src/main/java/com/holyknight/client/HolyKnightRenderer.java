@@ -1,6 +1,6 @@
-package com.holynight.client;
+package com.holyknight.client;
 
-import com.holynight.HolyKnightEntity;
+import com.holyknight.HolyKnightEntity;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
