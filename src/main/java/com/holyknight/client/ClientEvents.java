@@ -12,5 +12,11 @@ public class ClientEvents {
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(HolyKnight.HOLY_KNIGHT.get(), HolyKnightRenderer::new);
+        event.registerEntityRenderer(HolyKnight.HOLY_RAY_VISUAL.get(), HolyRayRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void onRegisterLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(HolyRayRenderer.MODEL_LAYER_LOCATION, HolyRayRenderer::createBodyLayer);
     }
 }

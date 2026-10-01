@@ -16,7 +16,7 @@ public class ModEvents {
                 HolyKnight.HOLY_KNIGHT.get(),
                 SpawnPlacements.Type.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                Monster::checkMonsterSpawnRules,
+                Monster::checkAnyLightMonsterSpawnRules,
                 SpawnPlacementRegisterEvent.Operation.AND
         );
     }

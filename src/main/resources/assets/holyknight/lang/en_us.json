@@ -1,3 +1,6 @@
 {
-	"entity.holyknight.holy_knight": "Holy Knight"
+	"entity.holyknight.holy_knight": "Holy Knight",
+	"entity.holyknight.holy_ray_visual": "Holy Ray",
+	"spell.holyknight.holy_ray": "Holy Ray",
+	"spell.holyknight.holy_ray.guide": "Fire an instant ray of holy light at your target. Deals extra damage to the undead."
 }
